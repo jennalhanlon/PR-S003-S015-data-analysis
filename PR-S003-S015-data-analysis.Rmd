@@ -49,14 +49,16 @@ library(RColorBrewer)
 library(microViz) 
 library(ComplexHeatmap) 
 library(plotly) 
-library(seecolor)  
+library(seecolor)
+library(htmlwidgets)
+library(htmltools)
 set.seed(17384)
 ```
 
 # Loading Data
 
 ```{r loading data}
-PRphyseq <- qza_to_phyloseq(features="S003-S015-table.qza", tree="S003-S015-rooted-tree.qza",taxonomy="S003-S015-taxonomy.qza", metadata = "S003-S015-Metadata-File-for-analysis.txt")
+PRphyseq <- qza_to_phyloseq(features="S003-S015-table.qza", tree="S003-S015-rooted-tree.qza",taxonomy="S003-S015-taxonomy.qza", metadata = "S003-S015-Field-Measurements-2.txt")
 ```
 
 ```{r rank names}
@@ -67,7 +69,7 @@ rank_names(PRphyseq)
 sample_variables(PRphyseq)
 ```
 
-# Removing chloroplast sequences and any contaminant sequences 
+# Removing chloroplast sequences and any contaminant sequences
 
 ```{r removing chloroplasts}
 ## Removing chloroplast sequences and any contaminant sequences
@@ -87,32 +89,38 @@ View((tax_table(PRphyseq)))
 ##This will allow you to open your data frame. You can search in the top right corner of the dataframe for the sequences you wanted to remove in above code to ensure they were removed. 
 ```
 
-# Creating a subset of samples 
+# Creating a subset of samples
 
-```{r create subset}
-PRphyseq <- PRphyseq %>% subset_samples(Project %in% c("S003","S015"))
-##This will create a subset (based on project column) of the samples we would like to use in the analysis. If you would like to keep all samples in the metadata file, you can ignore this step. 
+```{r create subset1}
+PRphyseq <- PRphyseq %>% subset_samples(Project %in% c("S003","S015"))  ##This will create a subset (based on project column) of the samples we would like to use in the analysis. If you would like to keep all samples in the metadata file, you can ignore this step. 
+
+
+PR_Normal <- PRphyseq %>% subset_samples(Sample_Type %in% c("N"))
 ```
 
+# Examine the number of reads
+
 ```{r readsumsdf}
- readsumsdf = data.frame(nreads = sort(taxa_sums(PRphyseq), TRUE),                                           sorted = 1:ntaxa(PRphyseq), type = "ASVs") 
- readsumsdf = rbind(readsumsdf, data.frame(nreads = sort(sample_sums(PRphyseq),                          TRUE), sorted = 1:nsamples(PRphyseq), type = "Samples"))
+ readsumsdf = data.frame(nreads = sort(taxa_sums(PR_Normal), TRUE),                                           sorted = 1:ntaxa(PR_Normal), type = "ASVs") 
+ readsumsdf = rbind(readsumsdf, data.frame(nreads = sort(sample_sums(PR_Normal),                          TRUE), sorted = 1:nsamples(PR_Normal), type = "Samples"))
  title = "Total number of reads" 
  p = ggplot(readsumsdf, aes(x = sorted, y = nreads)) + geom_bar(stat = "identity") 
  p + ggtitle(title) + scale_y_log10() + facet_wrap(~type, 1, scales = "free")
 ```
 
+Plot a rarefaction curve using vegan:
+
 ```{r taxa_are_rows}
-taxa_are_rows(PRphyseq)
+taxa_are_rows(PR_Normal)
 ```
 
 ```{r mat}
-mat <- t(otu_table(PRphyseq))
+mat <- t(otu_table(PR_Normal))
 class(mat) <- "matrix"
 
 class(mat)
 
-mat <- as(t(otu_table(PRphyseq)), "matrix")
+mat <- as(t(otu_table(PR_Normal)), "matrix")
 class(mat)
 
 raremax <- min(rowSums(mat))
@@ -121,100 +129,166 @@ system.time(rarecurve(mat, step = 100, sample = raremax, col = "blue", label = F
 
 ```
 
+# Creating table for number of reads per sample
+
+```{r}
+#Sum reads and sort by samples with least to greatest number of reads
+samples_reads <- sort(sample_sums(PR_Normal))
+#Create table
+knitr::kable(samples_reads) %>% 
+kableExtra::kable_styling("striped", latex_options="scale_down") %>% 
+kableExtra::scroll_box(width = "100%")
+```
+
+# Remove samples with \<1,000 reads
+
+```{r sample removal}
+#Remove samples with less than 1,000 reads
+PR_Normal = subset_samples(PR_Normal, 
+                            Sample_ID != "PR105C")
+PR_Normal = subset_samples(PR_Normal, 
+                            Sample_ID != "PR109C")
+PR_Normal = subset_samples(PR_Normal, 
+                           Sample_ID != "pr242a")
+PR_Normal = subset_samples(PR_Normal, 
+                            Sample_ID != "PR325")
+PR_Normal = subset_samples(PR_Normal, 
+                            Sample_ID != "PR164C")
+PR_Normal = subset_samples(PR_Normal, 
+                            Sample_ID != "PR151C")
+```
+
+# Examining abundance of individual ASVs
+
+```{r filter method}
+#For each ASV, find the number of samples in which each ASV is 0, then divide by the total number of samples 
+test_filter_method <- as.data.frame(rowSums(otu_table(PR_Normal) == 0)/ncol(otu_table(PR_Normal)))    
+#Change the name of the column in the test_filter_method4 dataframe; this column contains the proportion of samples in which each ASV is 0  
+colnames(test_filter_method) <- c('samplew0')   
+#Create a bar plot 
+ggplot(data = test_filter_method) + geom_bar(mapping = aes(x= samplew0)) +labs(x = "Proportion of samples in which ASV = 0", y = "# of ASV's") +theme(text = element_text(size = 18), axis.title = element_text(size = 15),panel.spacing = unit(1, "lines"),panel.border = element_rect(colour = "black", fill = NA, size = 0.5), panel.background = element_blank()) 
+
+```
+
+## Removing singletons and doubletons
+
+```{r removing singletons and doubletons}
+
+##How many singletons and doubletons are present 
+#Create a dataframe that includes only the total number of times that each ASV occurs
+readsumsdf_ASVs <- readsumsdf %>% 
+    filter(type == "ASVs")    
+#How many singletons are present?
+length(which(readsumsdf_ASVs$nreads <= 0))
+
+length(which(readsumsdf_ASVs$nreads == 1))
+
+#How many doubletons are present?
+length(which(readsumsdf_ASVs$nreads == 2))
+
+#Filter out low abundance ASVs
+
+PR_Normal = prune_taxa(taxa_sums(PR_Normal) > 2, PR_Normal)
+```
+
+Examine the abundance of individual ASVs again:
+
+```{r filt abundance check}
+
+#For each ASV, find the number of samples in which each ASV is 0, then divide by the total number of samples 
+test_filter_method_filtered <- as.data.frame(rowSums(otu_table(PR_Normal) == 0)/ncol(otu_table(PR_Normal)))   
+
+#Change the name of the column in the test_filter_method4 dataframe; this column contains the proportion of samples in which each ASV is 0 
+colnames(test_filter_method_filtered) <- c('samplew0')  
+
+#Create a bar plot 
+ggplot(data = test_filter_method_filtered) + geom_bar(mapping = aes(x= samplew0)) + 
+  labs(x = "Proportion of samples in which ASV = 0", y = "# of ASV's") +   
+  theme(text = element_text(size = 18), axis.title = element_text(size = 15), 
+        panel.spacing = unit(1, "lines"), 
+        panel.border = element_rect(colour = "black", fill = NA, size = 0.5), 
+        panel.background = element_blank()) 
+```
+
+# Label variables
+
 ```{r sample_data}
-sample_data(PRphyseq)$Location <- factor(sample_data(PRphyseq)$Location,              levels = c("bsj1","bsj1-enr","bsj2","bsj2-enr","bsj3","bsj3-enr","bsj4-enr","bsj5-enr","bsj6-enr","bsj7-enr","bvscc","cmp1","cmp1-enr","cmp2","cmp2-enr","cmpe","cmpw","cs1","cs1-enr","cs2","cs2-enr","csa1-enr","llc1","llc1-enr","lp1","lp1-enr","lp1-enr","lp1l-enr","lp2-enr","lp3-enr","lp4-enr","lp5-enr","lsj1","lsj1-enr","lsj2","lsj2-enr","lsj3","lt1","lt1-enr","lt2","lt2-enr","lt3-enr","qb1-enr","qsa1-enr","rpn1-enr"),                             
-labels = c("bsj1","bsj1-enr","bsj2","bsj2-enr","bsj3","bsj3-enr","bsj4-enr","bsj5-enr","bsj6-enr","bsj7-enr","bvscc","cmp1","cmp1-enr","cmp2","cmp2-enr","cmpe","cmpw","cs1","cs1-enr","cs2","cs2-enr","csa1-enr","llc1","llc1-enr","lp1","lp1-enr","lp1-enr","lp1l-enr","lp2-enr","lp3-enr","lp4-enr","lp5-enr","lsj1","lsj1-enr","lsj2","lsj2-enr","lsj3","lt1","lt1-enr","lt2","lt2-enr","lt3-enr","qb1-enr","qsa1-enr","rpn1-enr")) 
-sample_data(PRphyseq)$Season <- factor(sample_data(PRphyseq)$Season,                                                 levels = c("W", "D"), 
+sample_data(PR_Normal)$Sub_Location <- factor(sample_data(PR_Normal)$Sub_Location,              levels = c("BSJ1","BSJ1-ENR","BSJ2","BSJ2-ENR","BSJ3","BSJ3-ENR","BSJ4-ENR","BSJ5-ENR","BSJ6-ENR","BSJ7-ENR","CMP1","CMP1-ENR","CMP2","CMP2-ENR","CMPE","CMPW","CS1","CS1-ENR","CS2","CS2-ENR","CSA1-ENR","LLC1","LLC1-ENR","LP1","LP1-ENR","LP1-ENR","LP1L-ENR","LP2-ENR","LP3-ENR","LP4-ENR","LP5-ENR","LSJ1","LSJ1-ENR","LSJ2","LSJ2-ENR","LSJ3","LT1","LT1-ENR","LT2","LT2-ENR","LT3-ENR","QB1-ENR","QSA1-ENR","RPN1-ENR"),                         
+labels = c("BSJ1","BSJ1-ENR","BSJ2","BSJ2-ENR","BSJ3","BSJ3-ENR","BSJ4-ENR","BSJ5-ENR","BSJ6-ENR","BSJ7-ENR","CMP1","CMP1-ENR","CMP2","CMP2-ENR","CMPE","CMPW","CS1","CS1-ENR","CS2","CS2-ENR","CSA1-ENR","LLC1","LLC1-ENR","LP1","LP1-ENR","LP1-ENR","LP1L-ENR","LP2-ENR","LP3-ENR","LP4-ENR","LP5-ENR","LSJ1","LSJ1-ENR","LSJ2","LSJ2-ENR","LSJ3","LT1","LT1-ENR","LT2","LT2-ENR","LT3-ENR","QB1-ENR","QSA1-ENR","RPN1-ENR"))
+
+sample_data(PR_Normal)$Location <- factor(sample_data(PR_Normal)$Location,              levels = c(
+  "BSJ","BSJ-ENR","CMP","CMP-ENR","CMPE","CMPW", "CS","CS-ENR", "CSA","CSA-ENR","LLC","LLC-ENR","LP","LP-ENR","LSJ","LSJ-ENR","LT","LT-ENR","QB","QB-ENR","QSA","QSA-ENR","RPN","RPN-ENR"),
+labels = c("BSJ","BSJ-ENR","CMP","CMP-ENR","CMPE","CMPW", "CS","CS-ENR", "CSA","CSA-ENR","LLC","LLC-ENR","LP","LP-ENR","LSJ","LSJ-ENR","LT","LT-ENR","QB","QB-ENR","QSA","QSA-ENR","RPN","RPN-ENR"))
+sample_data(PR_Normal)$Season <- factor(sample_data(PR_Normal)$Season,                                             levels = c("W", "D"), 
 labels = c("W", "D"))
 
-sample_data(PRphyseq)$Project <- factor(sample_data(PRphyseq)$Project,
+sample_data(PR_Normal)$Project <- factor(sample_data(PR_Normal)$Project,
                                levels = c("S003","S015"), labels = c("S003","S015"))
 
-sample_data(PRphyseq)$Month <- factor(sample_data(PRphyseq)$Month,
+sample_data(PR_Normal)$Month <- factor(sample_data(PR_Normal)$Month,
                                levels = c("April","August","December","January","July","June","March","May","November","October","September"), labels = c("April","August","December","January","July","June","March","May","November","October","September"))
   
-sample_data(PRphyseq)$Year <- factor(sample_data(PRphyseq)$Year,
+sample_data(PR_Normal)$Year <- factor(sample_data(PR_Normal)$Year,
                                      levels = c("2021","2022","2023"), labels = c("2021","2022","2023"))
   
-sample_data(PRphyseq)$Sample_Type <- factor(sample_data(PRphyseq)$Sample_Type,
+sample_data(PR_Normal)$Sample_Type <- factor(sample_data(PR_Normal)$Sample_Type,
                                             levels = c("N","E"), labels = c("N","E"))
-sample_data(PRphyseq)$Sample <- factor(sample_data(PRphyseq)$Sample,                 levels = c("bsj1","bsj1-enr","bsj2","bsj2-enr","bsj3","bsj3-enr","bsj4-enr","bsj5-enr","bsj6-enr","bsj7-enr","bvscc","cmp1","cmp1-enr","cmp2","cmp2-enr","cmpe","cmpw","cs1","cs1-enr","cs2","cs2-enr","csa1-enr","llc1","llc1-enr","lp1","lp1-enr","lp1-enr","lp1l-enr","lp2-enr","lp3-enr","lp4-enr","lp5-enr","lsj1","lsj1-enr","lsj2","lsj2-enr","lsj3","lt1","lt1-enr","lt2","lt2-enr","lt3-enr","qb1-enr","qsa1-enr","rpn1-enr"),                             
-labels = c("bsj1","bsj1-enr","bsj2","bsj2-enr","bsj3","bsj3-enr","bsj4-enr","bsj5-enr","bsj6-enr","bsj7-enr","bvscc","cmp1","cmp1-enr","cmp2","cmp2-enr","cmpe","cmpw","cs1","cs1-enr","cs2","cs2-enr","csa1-enr","llc1","llc1-enr","lp1","lp1-enr","lp1-enr","lp1l-enr","lp2-enr","lp3-enr","lp4-enr","lp5-enr","lsj1","lsj1-enr","lsj2","lsj2-enr","lsj3","lt1","lt1-enr","lt2","lt2-enr","lt3-enr","qb1-enr","qsa1-enr","rpn1-enr")) 
-  
+sample_data(PR_Normal)$Sample_ID <- factor(sample_data(PR_Normal)$Sample_ID,
+                                            levels = c("PR419","PR417","PR422","PR421","PR420","PR416","PR415","90","44","42","63","5","18","pr293a", "pr271a","pr262a","pr285a","pr295a","pr267a","pr290a","PR425","PR325","PR323","PR321","PR322","PR332","PR333","PR331","PR315","PR318","PR328","PR317","PR316","PR334",	"PR311","PR563A","PR562A","PR560A","PR561A","PR565A","cmp2-3","cmpe-3","cmpw-3","cs1-3","PR556A","PR559A","PR564A","lp1-3","PR558A","PR557A","PR566A","lsj3-3","PR555A","PR554A","cmp2-2","cmpe-2","cmpw-2","cs1-2","lp1-2","lsj3-2","PR395","PR394","PR392",	"PR393","PR400","PR401","PR399","PR402","PR464A","PR465A","PR466A","PR467A","PR468A","PR469A","PR470A","PR473A","cmp2-1","PR472A","cmpe-1","cmpw-1","cs1-1","PR476A","PR477A","PR474A","PR478A","lp1-1","PR488A","PR489A","PR490A","PR491A","PR492A","PR493A","PR479A","PR480A","lsj3-1","PR481A","PR482A","PR483A","PR484A","PR485A","PR471A","Mock","Undeter","B53","B84","B59","B43","B36","B44","B107","B90","B126","B141","B128","B152","B134","B132","B140","B89","B100","B102","B60","B76","B56","blank","blank2","Mock-com","B130","B136","B138","B33","B25","B41","B81","B68","B57","B87","B91","B117","B143","B139","B154","B69","B52","B75","B99","B118","B124","B26","B34","B42","pr249a","pr248a","pr250a","pr242a","pr247a","183","218","181","198","239","220","PR160C","PR162C","PR164C","PR102C","101","PR109C","108","PR107C","106","PR143C","142","PR145C","PR151C","PR96C","95","PR147C","PR149C","PR105C","104","PR139C","PR141C"
+),
+labels = c("PR419","PR417","PR422","PR421","PR420","PR416","PR415","90","44","42","63","5","18","pr293a", "pr271a","pr262a","pr285a","pr295a","pr267a","pr290a","PR425","PR325","PR323","PR321","PR322","PR332","PR333","PR331","PR315","PR318","PR328","PR317","PR316","PR334",	"PR311","PR563A","PR562A","PR560A","PR561A","PR565A","cmp2-3","cmpe-3","cmpw-3","cs1-3","PR556A","PR559A","PR564A","lp1-3","PR558A","PR557A","PR566A","lsj3-3","PR555A","PR554A","cmp2-2","cmpe-2","cmpw-2","cs1-2","lp1-2","lsj3-2","PR395","PR394","PR392",	"PR393","PR400","PR401","PR399","PR402","PR464A","PR465A","PR466A","PR467A","PR468A","PR469A","PR470A","PR473A","cmp2-1","PR472A","cmpe-1","cmpw-1","cs1-1","PR476A","PR477A","PR474A","PR478A","lp1-1","PR488A","PR489A","PR490A","PR491A","PR492A","PR493A","PR479A","PR480A","lsj3-1","PR481A","PR482A","PR483A","PR484A","PR485A","PR471A","Mock","Undeter","B53","B84","B59","B43","B36","B44","B107","B90","B126","B141","B128","B152","B134","B132","B140","B89","B100","B102","B60","B76","B56","blank","blank2","Mock-com","B130","B136","B138","B33","B25","B41","B81","B68","B57","B87","B91","B117","B143","B139","B154","B69","B52","B75","B99","B118","B124","B26","B34","B42","pr249a","pr248a","pr250a","pr242a","pr247a","183","218","181","198","239","220","PR160C","PR162C","PR164C","PR102C","101","PR109C","108","PR107C","106","PR143C","142","PR145C","PR151C","PR96C","95","PR147C","PR149C","PR105C","104","PR139C","PR141C"))
 ```
 
 # Tax Fix
 
-```{r tax fix}
-knitr::kable(head(tax_table(PRphyseq))) %>%   
+```{r tax view}
+#View the tax_table
+knitr::kable(head(tax_table(PR_Normal))) %>%   
   kableExtra::kable_styling("striped") %>%    
   kableExtra::scroll_box(width = "100%")  
 ```
 
-```{r tax fix continued}
-PRphyseq <- tax_fix(PRphyseq)  
-knitr::kable(head(tax_table(PRphyseq))) %>%   
+```{r tax fix}
+
+#Now fix the labels
+PR_Normal <- tax_fix(PR_Normal)
+
+#View the relabeled tax_table
+knitr::kable(head(tax_table(PR_Normal))) %>%   
   kableExtra::kable_styling("striped") %>%    
   kableExtra::scroll_box(width = "100%")
-```
 
-# Transforming Phyloseq Object
-
-```{r transforming the phyloseq object}
-PRphyseqRA = transform_sample_counts(PRphyseq, function(x){x / sum(x)})
-
-sample_data(PRphyseqRA)
-
-
-```
-
-```{r transform pt.2}
-PRphyseqRA_cutoff = transform_sample_counts(PRphyseq,function(x){x / sum(x)})
-```
-
-```{r filter method}
-##Not needed for the analysis 
-#For each ASV, find the number of samples in which each ASV is 0, then divide by the total number of samples
-test_filter_method4 <- as.data.frame(rowSums(otu_table(PRphyseq) == 0)/ncol(otu_table(PRphyseq))) 
-
-#Change the name of the column in the test_filter_method4 dataframe; this column contains the proportion of samples in which each ASV is 0
-colnames(test_filter_method4) <- c('samplew0')
-
-#Create a bar plot
-ggplot(data = test_filter_method4) +
-  geom_bar(mapping = aes(x= samplew0)) + 
-  geom_vline(xintercept = 0.9, linetype="dotted", color = "blue", size=1.5) +
-  labs(x = "Proportion of samples in which ASV = 0", y = "# of ASV's") +
-  theme(text = element_text(size = 18), 
-        axis.title = element_text(size = 15),
-        panel.spacing = unit(1, "lines"), 
-        panel.border = element_rect(colour = "black", fill = NA, size = 0.5), 
-        panel.background = element_blank())
 ```
 
 # Bacterial community composition bar plots
 
 ```{r loading seecolor}
 library(seecolor) 
-bcc_hex <- print_color(c("black", "#440154FF", "#450659FF","#460B5EFF","#472D7AFF","#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF", "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF","#2E6E8EFF", "#2D718EFF", "#2B748EFF","#2A778EFF", "#297B8EFF","#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF","#1FA287FF", "#21A585FF", "#23A983FF","#25AC82FF", "#29AF7FFF", "#2DB27DFF","#32B67AFF", "#37B878FF", "#3CBC74FF","#57C766FF", "#5EC962FF","#A2DA37FF","#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF","darkorchid1", "darkorchid2", "darkorchid3","#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF","#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#FF6699","#F68D45FF", "#FCA537FF","#F6E726FF", "#F4ED27FF", "#00489C", "#CCCCCC", "#999999", "#A1C299","#300018"), type = "r")
+bcc_hex <- print_color(c("black", "#440154FF", "#450659FF","#460B5EFF","#472D7AFF","#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF", "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF","#2E6E8EFF", "#2D718EFF", "#2B748EFF","#2A778EFF", "#297B8EFF","#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF","#1FA287FF", "#21A585FF", "#23A983FF","#25AC82FF", "#29AF7FFF", "#2DB27DFF","#32B67AFF", "#37B878FF", "#3CBC74FF","#57C766FF", "#5EC962FF","#A2DA37FF","#DAE319FF", "#E4E419FF","#ECE51BFF", "#F5E61FFF","darkorchid1", "darkorchid2", "darkorchid3","#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF","#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#FF6699","#F68D45FF", "#FCA537FF","#F6E726FF", "#F4ED27FF", "#00489C", "#CCCCCC", "#999999", "#A1C299","#300018"), type = "r")
 ```
 
-# Creating Family Barplot
+## Creating Family Barplot
+
+```{r}
+##Subsetting non-enriched samples to view composition in bar plot
+
+PR_N <- PR_Normal %>% subset_samples(Sample_Type %in% c("N"))
+```
 
 ```{r generating barplots}
-PRSeqR_family <- PRphyseq %>%  
+PRSeqR_family <- PR_N %>%  
   tax_glom(taxrank = "Family") %>%   
   transform_sample_counts(function(x) {x/sum(x)}) %>%   
   psmelt() %>%   
-  group_by(Sample,             
+  group_by(Location,             
            Kingdom, Phylum, Class, Order, Family) %>%  
   filter(Abundance > 0.01) %>%    
   arrange(Class)
 PRSeqR_family$Class_family <- paste(PRSeqR_family$Class, PRSeqR_family$Family, sep="_") 
-PRSeqR_family_bar <- ggplot(PRSeqR_family, aes(x = Sample, y = Abundance, fill = Class_family)) +   
+PRSeqR_family_bar <- ggplot(PRSeqR_family, aes(x = Location, y = Abundance, fill = Class_family)) +   
   geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") + scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +  
   guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +  
-  ylab("Relative Abundance (Family > 1%) \n") + xlab("Sample ID") +   
+  ylab("Relative Abundance (Family > 1%) \n") + xlab("Location") +   
   theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"), panel.grid.minor = element_blank(),                         
 panel.grid.major = element_blank(), axis.text.x  =element_text(angle = 90, vjust = 0.5, hjust=1, size=8, colour="black"),                          
 axis.text.y = element_text(size=8, colour="black"), plot.title = element_text(hjust = 0.5),     
@@ -222,27 +296,19 @@ axis.ticks.x = element_line(colour="#000000", size=0.1), axis.ticks.y = element_
 legend.text = element_text(size = 7))
 ```
 
-```{r family bar plot}
+```{r family bar plot1}
 print(PRSeqR_family_bar)
 ```
 
-```{r barplot}
-ggplotly(PRSeqR_family_bar)
-```
-
-```{r ggplotly}
+```{r ggplotly 1}
 p <- ggplotly(PRSeqR_family_bar)
-
-p
 ```
-
-# 
 
 ```{r save}
-htmlwidgets::saveWidget(p, "family_bar.html")
+htmlwidgets::saveWidget(p, "PRSeqR_family_bar.html")
 
 htmltools::tags$iframe(
-  src=file.path(getwd(), "family_bar.html"),
+  src=file.path(getwd(), "PRSeqR_family_bar.html"),
   width="100%",
   height="600",
   scrolling="no",
@@ -250,10 +316,53 @@ htmltools::tags$iframe(
   frameBorder="0")
 ```
 
-# Creating Season Barplot
+## Creating Species Barplot
+
+```{r generating barplots 2}
+PRSeqR_Species <- PR_N %>%  
+  tax_glom(taxrank = "Species") %>%   
+  transform_sample_counts(function(x) {x/sum(x)}) %>%   
+  psmelt() %>%   
+  group_by(Location,             
+           Kingdom, Phylum, Class, Order, Family,Genus,Species) %>%  
+  filter(Abundance > 0.05) %>%    
+  arrange(Species)
+PRSeqR_Species_bar <- ggplot(PRSeqR_Species, aes(x = Location, y = Abundance, fill = Species)) +   
+  geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") + scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +  
+  guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +  
+  ylab("Relative Abundance (Species > 5%) \n") + xlab("Sample ID") +   
+  theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"), panel.grid.minor = element_blank(),                         
+panel.grid.major = element_blank(), axis.text.x  =element_text(angle = 90, vjust = 0.5, hjust=1, size=8, colour="black"),                          
+axis.text.y = element_text(size=8, colour="black"), plot.title = element_text(hjust = 0.5),     
+axis.ticks.x = element_line(colour="#000000", size=0.1), axis.ticks.y = element_line(colour="#000000", size=0.1),                        
+legend.text = element_text(size = 7))
+```
+
+```{r barplot2}
+p2 <- ggplotly(PRSeqR_Species_bar)
+```
+
+```{r species bar plot1}
+print(PRSeqR_Species_bar)
+```
+
+```{r save 1}
+htmlwidgets::saveWidget(p, "PRSeqR_Species_bar.html")
+
+htmltools::tags$iframe(
+  src=file.path(getwd(), "PRSeqR_Species_bar.html"),
+  width="100%",
+  height="600",
+  scrolling="no",
+  seamless="seamless",
+  frameBorder="0")
+
+```
+
+## Creating Season vs Location Barplot with non-enriched samples
 
 ```{r Season barplot}
-PRSeqR_family_Season <- PRphyseq %>%    
+PRSeqR_family_Season <- PR_N %>%    
   tax_glom(taxrank = "Family") %>%     
   transform_sample_counts(function(x) {x/sum(x)}) %>%   
   psmelt() %>%    
@@ -276,21 +385,17 @@ PRSeqR_Season_family_bar <- ggplot(PRSeqR_family_Season, aes(x = Season, y = Mea
 print(PRSeqR_Season_family_bar)
 ```
 
-```{r season family bar}
-ggplotly(PRSeqR_Season_family_bar)
-```
-
 ```{r season family bar 2}
-p <- ggplotly(PRSeqR_Season_family_bar)
+p3 <- ggplotly(PRSeqR_Season_family_bar)
 
 p
 ```
 
-```{r}
-htmlwidgets::saveWidget(p, "Season.html")
+```{r save2}
+htmlwidgets::saveWidget(p, "Season_family.html")
 
 htmltools::tags$iframe(
-  src=file.path(getwd(), "Season.html"),
+  src=file.path(getwd(), "Season_family.html"),
   width="100%",
   height="600",
   scrolling="no",
@@ -298,28 +403,462 @@ htmltools::tags$iframe(
   frameBorder="0")
 ```
 
-# Creating Season vs. Location Barplot
+## Creating Season vs. Location barplot with only normal samples
 
 ```{r}
-#Examining BCC by Location & Season
-PRSeqR_family_Location <- PRphyseq %>%   
-  tax_glom(taxrank = "Family") %>%                    #Agglomerate at family level   
-  transform_sample_counts(function(x) {x/sum(x)}) %>% #Transform to rel.                                                              abundance  
-  psmelt() %>%                                    # Melt to long format  
+
+PRSeqR_family_Location <- PR_Normal %>%   
+  tax_glom(taxrank = "Family") %>%                    
+  #Agglomerate at family level   
+  transform_sample_counts(function(x) {x/sum(x)}) %>%
+  #Transform to rel.abundance  
+  psmelt() %>%                                    
+  # Melt to long format  
   group_by(Season, Location, Kingdom, Phylum, Class, Order, Family) %>%   
-  dplyr::summarize(Mean =  mean(Abundance, na.rm=TRUE)) %>%                                                                #Calculate average  
-  filter(Mean > 0.01) %>%                          #Filter arrange
+  dplyr::summarize(Mean =  mean(Abundance, na.rm=TRUE)) %>%                              #Calculate average  
+  filter(Mean > 0.01) %>%                         
+  #Filter arrange
   arrange(Class) 
 ```
 
 ```{r}
 #Creating a new column that combines both the Class and Family level information #so that Family level identifiers that are not unique to one Class (such as Ambiguous_taxa) aren't merged into a single large category when graphed 
 PRSeqR_family_Location$Class_family <- paste(PRSeqR_family_Location$Class, PRSeqR_family_Location$Family, sep="_")                                                 #Creating plot   
-PRSeqR_Location_family_bar <- ggplot(PRSeqR_family_Location, aes(x = Location, y = Mean, fill = Class_family)) +  geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") +   scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +      guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +   ylab("Relative Abundance (Family > 1%) \n") + xlab("Location") +   theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"),    panel.grid.minor = element_blank(),   panel.grid.major = element_blank(),    axis.text.x  = element_text(angle = 90, vjust = 0.5, hjust=1, size=8,                                colour="black"),    axis.text.y = element_text(size=8, colour="black"),    plot.title = element_text(hjust = 0.5),    axis.ticks.x = element_line(colour="#000000", size=0.1),    axis.ticks.y = element_line(colour="#000000", size=0.1),   legend.text = element_text(size = 7)) +   facet_grid(. ~ Season, margins = TRUE, scale="free")
+PRSeqR_Location_family_bar <- ggplot(PRSeqR_family_Location, aes(x = Location, y = Mean, fill = Class_family)) +  geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") +   scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +      guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +   ylab("Relative Abundance (Family > 1%) \n") + xlab("Location") +   theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"),    panel.grid.minor = element_blank(),   panel.grid.major = element_blank(),    axis.text.x  = element_text(angle = 90, vjust = 0.5, hjust=1, size=8,                                colour="black"),    axis.text.y = element_text(size=8, colour="black"),    plot.title = element_text(hjust = 0.5),    axis.ticks.x = element_line(colour="#000000", size=0.1),    axis.ticks.y = element_line(colour="#000000", size=0.1),   legend.text = element_text(size = 7)) +   facet_grid(. ~ Location, margins = TRUE, scale="free")
 
 print(PRSeqR_Location_family_bar)
 ```
 
 ```{r}
-ggplotly(PRSeqR_Location_family_bar)
+p4 <- ggplotly(PRSeqR_Location_family_bar)
+```
+
+```{r save 3}
+htmlwidgets::saveWidget(p,"PRSeqR_Location_family_bar")
+htmltools::tags$iframe(
+  src=file.path(getwd(),"PRSeqR_Location_family_bar"),
+  width="100%",
+  height="600",
+  scrolling="no",
+  seamless="seamless",
+  frameBorder="0")
+
+```
+
+## Creating location vs. year barplot
+
+```{r create subset3}
+PR_Normal <- PRphyseq %>% subset_samples(Sample_Type %in% c("N"))
+
+PR_2022 <- PRphyseq %>% subset_samples(Year %in% c("2022"))
+
+##Creating a subset of samples for only normal samples.This will exclude the enriched samples
+```
+
+```{r Year barplot}
+PRSeqR_family_Year <- PRphyseq %>%    
+  tax_glom(taxrank = "Family") %>%     
+  transform_sample_counts(function(x) {x/sum(x)}) %>%   
+  psmelt() %>%    
+  group_by(Year,Season, Kingdom, Phylum, Class, Order, Family)%>%   
+  dplyr::summarize(Mean =                      
+                     mean(Abundance, na.rm=TRUE)) %>%    
+  filter(Mean > 0.01) %>%                                
+  arrange(Class)  
+
+## `summarise()` has grouped output by 'Season', 'Kingdom', 'Phylum', 'Class',
+## 'Order'. You can override using the `.groups` argument.
+```
+
+```{r}
+#Creating a new column that combines both the Class and Family level information #so that Family level identifiers that are not unique to one Class (such as Ambiguous_taxa) aren't merged into a single large category when graphed 
+PRSeqR_family_Year$Class_family <- paste(PRSeqR_family_Year$Class, PRSeqR_family_Year$Family, sep="_")                                                 #Creating plot   
+PRSeqR_Year_family_bar <- ggplot(PRSeqR_family_Year, aes(x = Year, y = Mean, fill = Class_family)) +  geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") +   scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +      guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +   ylab("Relative Abundance (Family > 1%) \n") + xlab("Year") +   theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"),    panel.grid.minor = element_blank(),   panel.grid.major = element_blank(),    axis.text.x  = element_text(angle = 90, vjust = 0.5, hjust=1, size=8,                                colour="black"),    axis.text.y = element_text(size=8, colour="black"),    plot.title = element_text(hjust = 0.5),    axis.ticks.x = element_line(colour="#000000", size=0.1),    axis.ticks.y = element_line(colour="#000000", size=0.1),   legend.text = element_text(size = 7)) +   facet_grid(. ~ Season, margins = TRUE, scale="free")
+
+print(PRSeqR_Year_family_bar)
+```
+
+```{r}
+p5 <- ggplotly(PRSeqR_Year_family_bar)
+```
+
+Note that 2023 is only enriched samples so this year cannot be accurately depicted and 2022 is missing from the wet season.
+
+\*Now that we know there is an error in the 2022 data when attempting to generate the 2022 NMDS plot, we will be creating a family plot for the 2022 samples to determine what is too similar - this is what we think is preventing the NMDS plot from being generated.
+
+```{r}
+PRSeqR_2022_Sample <- PR_2022 %>%
+  tax_glom(taxrank = "Family") %>%
+  transform_sample_counts(function(x) {x/sum(x)}) %>%
+  psmelt() %>%
+  group_by(Location,Season,Kingdom,Phylum,Class,Order,Family,Genus,Species)%>%   
+  dplyr::summarize(Mean =          
+ mean(Abundance, na.rm=TRUE)) %>%    
+  filter(Mean > 0.00) %>%                                
+  arrange(Class)  
+
+##`summarise()` has grouped output by 'Season', 'Kingdom', 'Phylum', 'Class',
+## 'Order'. You can override using the `.groups` argument
+```
+
+```{r}
+#Creating a new column that combines both the Class and Family level information #so that Family level identifiers that are not unique to one Class (such as Ambiguous_taxa) aren't merged into a single large category when graphed 
+PRSeqR_2022_Sample$Family <- paste(PRSeqR_2022_Sample$Class, PRSeqR_2022_Sample$Family, sep="_")                                                 #Creating plot   
+PRSeqR_2022_Sample_bar <- ggplot(PRSeqR_2022_Sample, aes(x = Location, y = Mean, fill = Family)) +  geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") +   scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +      guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +   ylab("Relative Abundance (Family > 1%) \n") + xlab("Location") +   theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"),    panel.grid.minor = element_blank(),   panel.grid.major = element_blank(),    axis.text.x  = element_text(angle = 90, vjust = 0.5, hjust=1, size=8,                                colour="black"),    axis.text.y = element_text(size=8, colour="black"),    plot.title = element_text(hjust = 0.5),    axis.ticks.x = element_line(colour="#000000", size=0.1),    axis.ticks.y = element_line(colour="#000000", size=0.1),   legend.text = element_text(size = 7))
+
+print(PRSeqR_2022_Sample_bar)
+```
+
+```{r}
+ p6 <- ggplotly(PRSeqR_2022_Sample_bar)
+```
+
+This is showing the samples averaged together, but there are multiple samples from each site. We are going to plot based on sample name to give us individual bars for each sample to better understand the similarities between each other.
+
+```{r}
+PRSeqR_2022_Sample_ID <- PR_2022 %>%    
+  tax_glom(taxrank = "Family") %>%     
+  transform_sample_counts(function(x) {x/sum(x)}) %>%   
+  psmelt() %>%    
+  group_by(Sample_ID,Location,Season,Kingdom,Phylum,Class,Order,Family,Genus,Species)%>%   
+  dplyr::summarize(Mean =                      
+                     mean(Abundance, na.rm=TRUE)) %>%    
+  filter(Mean > 0.00) %>%                                
+  arrange(Class)  
+
+## `summarise()` has grouped output by 'Season', 'Kingdom', 'Phylum', 'Class',
+## 'Order'. You can override using the `.groups` argument
+```
+
+```{r}
+#Creating a new column that combines both the Class and Family level information #so that Family level identifiers that are not unique to one Class (such as Ambiguous_taxa) aren't merged into a single large category when graphed 
+PRSeqR_2022_Sample_ID$Family <- paste(PRSeqR_2022_Sample_ID$Class, PRSeqR_2022_Sample_ID$Family, sep="_")                                                 #Creating plot   
+PRSeqR_2022_Sample_ID_bar <- ggplot(PRSeqR_2022_Sample_ID, aes(x = Sample_ID, y = Mean, fill = Family)) +  geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") +   scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +      guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +   ylab("Relative Abundance (Family > 1%) \n") + xlab("Sample_ID") +   theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"),    panel.grid.minor = element_blank(),   panel.grid.major = element_blank(),    axis.text.x  = element_text(angle = 90, vjust = 0.5, hjust=1, size=8,                                colour="black"),    axis.text.y = element_text(size=8, colour="black"),    plot.title = element_text(hjust = 0.5),    axis.ticks.x = element_line(colour="#000000", size=0.1),    axis.ticks.y = element_line(colour="#000000", size=0.1),   legend.text = element_text(size = 7))
+
+print(PRSeqR_2022_Sample_ID_bar)
+```
+
+```{r}
+p7 <- ggplotly(PRSeqR_2022_Sample_ID_bar)
+```
+
+```{r save 5}
+htmlwidgets::saveWidget(p,"PRSeqR_2022_Sample_ID_bar")
+htmltools::tags$iframe(
+  src=file.path(getwd(),"PRSeqR_2022_Sample_ID_bar"),
+  width="100%",
+  height="600",
+  scrolling="no",
+  seamless="seamless",
+  frameBorder="0")
+```
+
+## Creating barplots for enriched samples
+
+```{r ENR subset}
+
+#PR_ENR <- PRphyseq %>% subset_samples(Sample_Type %in% c("E"))
+
+##Creating a subset of samples for only enriched samples.This will exclude the normal samples
+```
+
+```{r Location barplot1}
+#PRSeqR_family_Location <- PR_ENR %>%    
+#  tax_glom(taxrank = "Species") %>%     
+#  transform_sample_counts(function(x) {x/sum(x)}) %>%   
+#  psmelt() %>%    
+#  group_by(Location,Season,Kingdom,Phylum,Class,Order,Family,Genus,Species)%>%   
+#  dplyr::summarize(Mean =                      
+#                     mean(Abundance, na.rm=TRUE)) %>%    
+#  filter(Mean > 0.00) %>%                                
+#  arrange(Class)  
+
+## `summarise()` has grouped output by 'Season', 'Kingdom', 'Phylum', 'Class',
+## 'Order'. You can override using the `.groups` argument
+```
+
+```{r}
+#Creating a new column that combines both the Class and Family level information #so that Family level identifiers that are not unique to one Class (such as Ambiguous_taxa) aren't merged into a single large category when graphed 
+PRSeqR_family_Location$Genus_species <- paste(PRSeqR_family_Location$Class, PRSeqR_family_Location$Species, sep="_")                                                 #Creating plot   
+PRSeqR_Location_family_bar <- ggplot(PRSeqR_family_Location, aes(x = Location, y = Mean, fill = Genus_species)) +  geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") +   scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +      guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +   ylab("Relative Abundance (Species > 0) \n") + xlab("Location") +   theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"),    panel.grid.minor = element_blank(),   panel.grid.major = element_blank(),    axis.text.x  = element_text(angle = 90, vjust = 0.5, hjust=1, size=8,                                colour="black"),    axis.text.y = element_text(size=8, colour="black"),    plot.title = element_text(hjust = 0.5),    axis.ticks.x = element_line(colour="#000000", size=0.1),    axis.ticks.y = element_line(colour="#000000", size=0.1),   legend.text = element_text(size = 7))
+
+print(PRSeqR_Location_family_bar)
+```
+
+```{r}
+p8 <- ggplotly(PRSeqR_Location_family_bar)
+```
+
+```{r save 6}
+#(2/2) This step is needed to create an interactive plot on gtihub. After it has been pushed to github you can download the html doc and it will open as the interactive plot via your web browser.
+htmlwidgets::saveWidget(p, "PRSeqR_Location_family_bar")
+
+htmltools::tags$iframe(
+  src=file.path(getwd(), "PRSeqR_Location_family_bar"),
+  width="100%",
+  height="600",
+  scrolling="no",
+  seamless="seamless",
+  frameBorder="0"
+)
+```
+
+# Transforming Phyloseq object to relative abundance
+
+```{r transforming the phyloseq object}
+
+#Transform to relative abundance  
+PR_RA_Normal = transform_sample_counts(PR_Normal, function(x){x / sum(x)})    
+
+#View the otu_table to see the transformed relative abundances  
+View(otu_table(PR_RA_Normal)) 
+```
+
+# NMDS Plots
+
+## Choose colors and shapes
+
+```{r NMDS colors}
+#Choose colors
+plot.colors <- c("steelblue2","purple4","darkorange","firebrick","springgreen4", "gold", "darkblue", "yellowgreen","turquoise4", "orange","indianred","darkslategrey", "lightblue","darkgreen","mediumaquamarine","gray48","mediumorchid1", "#5F7FC7","#DA5724", "#508578", "#CBD588","#CD9BCD","#AD6F3B", "#673770","#D14285", "#652926", "#C84248", "#8569D5", "#5E738F","#D1A33D","#8A7C64", "#599861","dodgerblue","darkmagenta", "forestgreen","steelblue1", "cyan","mediumorchid3", "cadetblue3", "yellow", "#00FF7F","#40E0D0","#E97451","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58", "#C4B454")
+plot.shape <- c(21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21)
+```
+
+## Subset the samples
+
+Subsetting from PR_physeq_RA_Normal, which includes only the non-enriched samples. This dataframe has been filtered so that ASVs that were 0 in all samples are excluded.
+
+```{r NMDS subset}
+
+#PR_S003 <- PR_physeq_RA_Normal %>% subset_samples(Project %in% c("S003"))
+
+#PR_S015 <- PR_physeq_RA_Normal %>% subset_samples(Project %in% c("S015"))
+
+#PR_2021 <- PR_Normal %>% subset_samples(Year %in% c("2021"))
+
+#PR_2022 <- PR_Normal %>% subset_samples(Year %in% c("2022"))
+```
+
+## NMDS of both runs
+
+```{r make all NMDS calc}
+
+all.nmds.source.ord <- ordinate( 
+  physeq = PR_RA_Normal, 
+  method = "NMDS", 
+  distance = "bray")
+```
+
+## NMDs plot of location for combined runs
+
+```{r combined NMDs plot}
+#Plot, color coding by particle type
+all.nmds.Location <- plot_ordination(
+  physeq = PR_RA_Normal,
+  ordination = all.nmds.source.ord) + 
+  scale_fill_manual(values = plot.colors, "Location")+
+  scale_shape_manual(values = plot.shape, name = "Location") +
+  geom_point(mapping = aes(fill = factor(Location), shape = Location, size = 5)) +
+  guides(size=FALSE) +
+  guides(shape = guide_legend(override.aes = list(size = 3))) +
+  theme(plot.title = element_text(size = 18),
+        text = element_text(size = 18), 
+        axis.title = element_text(size = 15),
+        panel.spacing = unit(1, "lines"), 
+        panel.border = element_rect(colour = "black", fill = NA, size = 0.5), 
+        panel.background = element_blank(), 
+        legend.text = element_text(size = 15),
+        legend.title = element_text(size = 15),
+        legend.position = c(.99, .99),
+        legend.justification = c("right", "top"),
+        legend.box.just = "right",
+        legend.margin = margin(6, 6, 6, 6)) +
+  stat_ellipse(aes(group=Location))
+
+print(all.nmds.Location)
+```
+
+## NMDS plot of season
+
+```{r}
+#Plot, color coding by seaosn
+all.nmds.Season <- plot_ordination(
+  physeq = PR_RA_Normal,
+  ordination = all.nmds.source.ord) + 
+  scale_fill_manual(values = plot.colors, "Season") +
+  scale_shape_manual(values = c("D" = 21, "W" = 21), name = "Season") +
+  geom_point(mapping = aes(fill = factor(Season), shape = Season, size = 5)) +
+  guides(size=FALSE) +
+  guides(shape = guide_legend(override.aes = list(size = 3))) +
+  theme(plot.title = element_text(size = 18),
+        text = element_text(size = 18), 
+        axis.title = element_text(size = 15),
+        panel.spacing = unit(1, "lines"), 
+        panel.border = element_rect(colour = "black", fill = NA, size = 0.5), 
+        panel.background = element_blank(), 
+        legend.text = element_text(size = 15),
+        legend.title = element_text(size = 15),
+        legend.position = c(.99, .99),
+        legend.justification = c("right", "top"),
+        legend.box.just = "right",
+        legend.margin = margin(6, 6, 6, 6)) +
+  stat_ellipse(aes(group=Season))
+
+print(all.nmds.Season)
+```
+
+# PERMANOVA Analysis
+
+```{r Permanova 1}
+#filt_complete_bray <- phyloseq::distance(PR_RA_Normal, method = "bray")
+#filt_complete_bray_df <- data.frame(sample_data(PR_RA_Normal))
+#filt_complete <- adonis2(filt_complete_bray ~ mm_Hg*DO_mg_L*DO_LDO*Specific_Conductance_uS_cm, data = filt_complete_bray_df)
+#filt_complete
+```
+
+```{r Permanova part 2}
+#Run PERMANOVA with Bray-Curtis dissimilarity
+#filt_complete_bray <- phyloseq::distance(PR_RA_Normal, method = "bray")
+#filt_complete_bray_df <- data.frame(sample_data(PR_RA_Normal))
+#filt_complete <- adonis2(filt_complete_bray ~ Temperature_C*Location*pH*Salinity_ppt, data = filt_complete_bray_df)
+#filt_complete
+```
+
+```{r}
+#Run PERMANOVA with Bray-Curtis dissimilarity
+#filt_complete_bray <- phyloseq::distance(PR_RA_Normal, method = "bray")
+#filt_complete_bray_df <- data.frame(sample_data(PR_RA_Normal))
+#filt_complete <- adonis2(filt_complete_bray ~ Temperature_C*Location*DO_LDO*pH*Salinity_ppt, data = filt_complete_bray_df)
+#filt_complete
+```
+
+```{r}
+#Convert output to dataframe
+#filt.complete.pvalue <- as.data.frame(filt_complete)
+
+#Create table of p-values
+#knitr::kable(filt.complete.pvalue, row.names = NA) %>% 
+ # kableExtra::kable_styling("striped", 
+                           # latex_options="scale_down") %>% 
+  #kableExtra::scroll_box(width = "100%")
+```
+
+## PERMANOVA analysis of location vs pH
+
+```{r}
+#Subset phyloseq object
+#filt.mp.particle.RA <- subset_samples(MPfiltRA, sample_type == "Particle")
+#sample_data(filt.mp.particle.RA)
+```
+
+```{r}
+#Run PERMANOVA with Bray-Curtis dissimilarity
+#filt_particle_bray <- phyloseq::distance(filt.mp.particle.RA, method = "bray")
+#filt_particle_bray_df <- data.frame(sample_data(filt.mp.particle.RA))
+#filt_all <- adonis2(filt_particle_bray ~ particle_type*effluent*week*polymer_type, data = filt_particle_bray_df)
+#filt_all
+```
+
+```{r}
+#Convert output to dataframe
+#filt.all.pvalue <- as.data.frame(filt_all)
+
+#Create table of p-values
+#knitr::kable(filt.all.pvalue, row.names = NA) %>% 
+  #kableExtra::kable_styling("striped", 
+                          # latex_options="scale_down") %>% 
+  #kableExtra::scroll_box(width = "100%")
+```
+
+```{r}
+#Run PERMANOVA with Bray-Curtis dissimilarity, only looking at particle type (glass vs. plastic)
+#filt_particle_only_bray <- phyloseq::distance(filt.mp.particle.RA, method = "bray")
+#filt_particle_only_bray_df <- data.frame(sample_data(filt.mp.particle.RA))
+#filt_only_particle <- adonis2(filt_particle_only_bray ~ particle_type, data = filt_particle_only_bray_df)
+#filt_only_particle
+```
+
+# NMDS Plot extras in R: Envfit
+
+```{r}
+##Load libraries and read in your data
+library(vegan)
+library(ggplot2)
+
+```
+
+```{r}
+##Subset your data to only environmental data and abundance data. 
+##I already had a dataframe from the PR_RA_Normal for abundance data, so I just needed to do the same for the sample data (aka environmental data).
+#df_env <- as.data.frame(sample_data(PR_RA_Normal))
+#df_com <- as.data.frame(otu_table(PR_RA_Normal))
+## Individual data frames created, now I am selecting the columns that will be used for this plot and renaming the data frame to com and env. 
+#com = df_com[,1:95]
+#env = df_env[,15:17, 20, 21,24]
+```
+
+```{r}
+#convert com to a matrix and perform the NMDs ordination
+#m_df_com = as.matrix(com)
+
+#nmds code
+#set.seed(123)
+#nmds = metaMDS(m_df_com, distance = "bray")
+#nmds
+```
+
+```{r}
+##Running envfit function with env dataframe
+#en = envfit(nmds,env, permutations = 999, na.rm = TRUE)
+```
+
+# RDA - Redundancy Analysis
+
+```{r}
+library(phyloseq)
+library(ggplot2)
+library(microViz)
+
+# install.packages("remotes")
+#remotes::install_github("statdivlab/corncob")
+#library(corncob)
+#> microViz version 0.12.0 - Copyright (C) 2023 David Barnett
+#> ! Website: https://david-barnett.github.io/microViz
+#> ✔ Useful?  For citation details, run: `citation("microViz")`
+#> ✖ Silence? `suppressPackageStartupMessages(library(microViz))`
+#knitr::opts_chunk$set(fig.width = 7, fig.height = 6)
+```
+
+```{r}
+#PR_RA_Normal <- corncob::PR_phylo
+#PR_phylo
+#> phyloseq-class experiment-level object
+#> otu_table()   OTU Table:         [ 36349 taxa and 91 samples ]
+#> sample_data() Sample Data:       [ 91 samples by 15 sample variables ]
+#> tax_table()   Taxonomy Table:    [ 36349 taxa by 7 taxonomic ranks ]
+
+```
+
+```{r}
+
+```
+
+```{r}
+##Redundancy analysis is a constrained ordination method. It displays the microbial variation that can also be explained by selected constraint variables. Behind the scenes, a linear regression model is created for each microbial abundance variable (using the constraints as the explanatory variables) and a PCA is performed using the fitted values of the microbial abundances.
+
+#PR_RA_Normal %>%
+ # ps_mutate(
+  #  IBD = as.numeric(ibd == "ibd"),
+   # Female = as.numeric(gender == "female"),
+   #  ) %>%
+ # tax_transform("clr", rank = "Genus") %>%
+ # ord_calc(
+    #constraints = c("IBD", "Female", "Abx."),
+    # method = "RDA", # Note: you can specify RDA explicitly, and it is good practice to do so, but microViz can guess automatically that you want an RDA here (helpful if you don't remember the name?)
+  #  scale_cc = FALSE # doesn't make a difference
+ # ) %>%
+ # ord_plot(
+ #   colour = "DiseaseState", size = 2, alpha = 0.5, shape = "active",
+ #   plot_taxa = 1:8
+ # )
 ```

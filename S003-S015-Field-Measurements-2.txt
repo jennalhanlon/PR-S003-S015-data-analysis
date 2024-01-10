@@ -1,0 +1,101 @@
+Sample	Project	Sub_Location	Location	Season	Month	Year	Sample_Type	Sample_ID	Day	Station_ID	Station_Name	Collected_by	Time	Samples_Collected_by	Temperature_C	mm_Hg	DO_mg_L	DO_LDO	Specific_Conductance_uS_cm	Salinity_ppt	pH	pH_mv	IVCH_ug_L	Turbidity_ Fluorometer	Comments
+PR563A	S015	BSJ1	BSJ	W	July	2021	N	PR563A	20	BSJ1	San Juan Bay 1	Boat	10:23 AM	ICC	28.7	763.5	7.72	123.30%	54176	35.71	7.65	-72.5	2.218	1.507	 
+PR325	S015	BSJ1	BSJ	D	January	2022	N	PR325	25	BSJ1	San Juan Bay 1	Boat	N/A	ICC	27.128	N/A	5.86	90.00%	53.817	35.51	8.01	N/A	N/A	0.4	 
+PR395	S015	BSJ1	BSJ	D	March	2022	N	PR395	29	BSJ1	San Juan Bay 1	Boat	10:46 AM	ICC	28.3	763	6.98	110.9	55731	36.9	8.02	-92	2.883	2.241	 
+PR562A	S015	BSJ2	BSJ	W	July	2021	N	PR562A	20	BSJ2	San Juan Bay 2	Boat	10:12 AM	ICC	28.5	763.4	7.45	118.60%	54036	35.62	7.67	-73.6	2.819	0.711	 
+PR160C	S015	BSJ2	BSJ	W	September	2021	N	PR160C	28	BSJ2	San Juan Bay 2	Boat	10:30 AM	ICC	30.6	759.4	9.2	143.30%	53865	35.42	7.68	-79.6	4.215	1.178	 
+PR323	S015	BSJ2	BSJ	D	January	2022	N	PR323	25	BSJ2	San Juan Bay 2	Boat	N/A	ICC	27.057	N/A	5.95	91.30%	53.88	35.56	8.03	N/A	N/A	0.4	 
+PR394	S015	BSJ2	BSJ	D	March	2022	N	PR394	29	BSJ2	San Juan Bay 2 	Boat	10:31 AM	ICC	27.5	763.1	7.08	112.1	55632	36.85	7.99	-93	1.805	1.671	 
+PR560A	S015	BSJ3	BSJ	W	July	2021	N	PR560A	20	BSJ3	San Juan Bay 3	Boat	9:25 AM	ICC	28.7	763.2	7.5	117.20%	54384	35.88	7.61	-69.5	5.277	1.635	 
+PR162C	S015	BSJ3	BSJ	W	September	2021	N	PR162C	28	BSJ3	San Juan Bay 3	Boat	9:30 AM	ICC	30.8	759.4	4.89	79.70%	54070	35.57	7.65	-77.2	5.762	1.837	 
+PR321	S015	BSJ3	BSJ	D	January	2022	N	PR321	25	BSJ3	San Juan Bay 3	Boat	N/A	ICC	27.66	N/A	5.7	99.40%	53.99	35.62	7.97	N/A	N/A	0.5	 
+PR392	S015	BSJ3	BSJ	D	March	2022	N	PR392	29	BSJ3	San Juan Bay 3	Boat	9:27 AM	ICC	27.6	763.2	6.3	98.2	55577	36.8	7.97	-91.9	4.471	3.178	 
+PR561A	S015	CMP1	CMP	W	July	2021	N	PR561A	20	CMP1	Caño Martin Peña 1	Boat	9:47 AM	ICC	28.9	763.3	5.59	82.30%	38638	27.57	7.35	-48.5	108.5	7.212	Water color: brown
+PR164C	S015	CMP1	CMP	W	September	2021	N	PR164C	28	CMP1	Caño Martin Peña 1	Boat	9.55 AM	ICC	31.3	765.94	9.82	94.90%	41610	27.64	7.6	-66.8	193.9	6.124	Water color: brown. Bad smell.
+PR322	S015	CMP1	CMP	D	January	2022	N	PR322	25	CMP1	Caño Martin Peña 1	Boat	N/A	ICC	27.73	N/A	2.25	34.00%	46.265	29.98	7.38	N/A	N/A	0.52	Water color: brown.
+PR393	S015	CMP1	CMP	D	March	2022	N	PR393	29	CMP1	Caño Martin Peña 1	Boat	9:54 AM	ICC	28.4	763.1	5.42	86.7	50212	31.77	7.49	-65	34.63	2.951	Water color: green.  Bad smell. 
+cmp2-1	S003	CMP2	CMP	D	May	2021	N	cmp2-1	27	CMP2	Caño Martín Peña 2	Land	10:40 AM	ICC/EFR/NSN	28.6	762.3	5.05	78.40%	47468	30.72	5.4	95.1	82.37	3.028	Bad odor. 
+cmp2-2	S003	CMP2	CMP	W	June	2021	N	cmp2-2	9	CMP2	Caño Martín Peña 2	Land	10:48 AM	ICC/AMO/JOV	26.1	762.8	0.88	12.10%	22730	13.69	4.83	128.1	14.48	7.1	It rained the day before. The water looked a bit stagnant. Water color: brown
+cmp2-3	S003	CMP2	CMP	W	July	2021	N	cmp2-3	1	CMP2	Caño Martin Peña 2	Land	9:26 AM	ICC/MSM	27.7	762	2.96	41.30%	24471	14.89	6.95	-21.9	15.58	2.555	Water color: brown. It rained the day before.
+PR565A	S015	CMP2	CMP	W	July	2021	N	PR565A	22	CMP2	Caño Martin Peña 2	Land	8:42 AM	ICC/AMO/JOV	28	764	1.24	18.30%	43473	27.69	6.96	-25.2	12.05	3.719	Water color: brown. It rained the day before.
+90	S003	CMP2	CMP	W	August	2021	N	90	25	CMP2	Caño Martin Peña 2	Land	9:15 AM	ICC	28.3	759.1	2.91	46.60%	50667	33.14	7.11	-38.6	12.16	1.957	 
+PR102C	S015	CMP2	CMP	W	September	2021	N	PR102C	30	CMP2	Caño Martin Peña 2	Land	9:06 AM	ICC/IGG/VSB	29.3	759	1.51	23.10%	45659	29.46	6.98	-32	25.33	10.38	 
+101	S003	CMP2	CMP	W	September	2021	N	101	30	CMP2	Caño Martin Peña 2	Land	9:06 AM	ICC/IGG/VSB	29.3	759	1.51	23.10%	45659	29.46	6.98	-32	25.33	10.38	 
+183	S003	CMP2	CMP	W	October	2021	N	183	14	CMP2	Caño Martin Peña 2	Land	10:05 AM	ICC/MOL/VSB	27.1	757.3	0.79	10.50%	10186	5.74	6.92	-18.9	11.46	3.717	Water color: brown. It rained the day before.
+pr249a	S003	CMP2	CMP	W	November	2021	N	pr249a	10	CMP2	Caño Martin Peña 2	Land	10:35 AM	JOV	28.2	760.9	1.99	33.70%	44246	28.51	6.96	-32.6	20.97	3.879	Water color: brown. Low visible water level (*verify)
+pr293a	S003	CMP2	CMP	D	December	2021	N	pr293a	16	CMP2	Caño Martin Peña 2	Land	8:58 AM	VSB	24.8	762.1	2.08	41.60%	30726	18.69	7.09	-38.1	15.07	2.799	It rained the day before. 
+PR332	S015	CMP2	CMP	D	January	2022	N	PR332	27	CMP2	Caño Martin Peña 2	Land	8:52 AM	ICC/APR/AVC	25.5	762.5	2.93	42.10%	40487	25.85	7.08	-41.8	10.58	5.432	 
+PR400	S015	CMP2	CMP	D	March	2022	N	PR400	31	CMP2	Caño Martin Peña 2	Land	10:09 AM	ICC/APR/AVC	26.7	762.4	1.33	20.8	40680	25.83	7.37	-55.2	29.65	4.15	Water color: brown . It rained the day before and before the sampling event.  
+PR425	S015	CMPE	CMPE	D	April	2022	N	PR425	5	CMPE	Caño Martin Peña East	Land	9:45 AM	ICC/VSB	29.1	761.8	7.19	101.1	17898	10.53	8.08	-99.9	311.2	23.37	Water color: green.
+cmpe-1	S003	CMPE	CMPE	D	May	2021	N	cmpe-1	27	CMPE	Caño Martín Peña East	Land	9:15 AM	ICC/EFR	27.8	762.3	0.61	9.80%	5222	3.03	5.37	97.4	705.2	13.29	"Modified sampling location: 18.428407, -66.041791                                              The water looked a bit stagnant. The CMPE was for the most part clogged by various objects, mostly different types of plastics. Bad odor. It was drizzling while I was collecting the water sample. Water color: GREEN "
+cmpe-2	S003	CMPE	CMPE	W	June	2021	N	cmpe-2	9	CMPE	Caño Martín Peña East	Land	9:08 AM	ICC/AMO/JOV	27.3	762.8	1.12	14.70%	834	0.41	4.7	136	48.66	10.13	"Modified sampling location: 18.428407,-66.041791.   The area around it has been cleaned, so the water flows and is no longer as stagnant as before. It rained the day before.                           "
+cmpe-3	S003	CMPE	CMPE	W	July	2021	N	cmpe-3	1	CMPE	Caño Martin Peña East	Land	10:26 AM	ICC/MSM	29.6	762.2	5.6	75.10%	2292	1.17	7.13	-34	196.9	7.993	Water color: brown. It rained the day before.
+44	S003	CMPE	CMPE	W	August	2021	N	44	25	CMPE	Caño Martin Peña East	Land	10:15 AM	ICC	30.2	759.5	9.83	136.00%	15021	8.66	7.76	-82.6	229.8	14.21	"Modified sampling location: 18.428407, -66.041791. Water color: brown. "
+PR109C	S015	CMPE	CMPE	W	September	2021	N	PR109C	30	CMPE	Caño Martin Peña East	Land	9:45 AM	ICC/IGG/VSB	30.8	759.3	3	45.40%	21690	12.93	7.33	-55.8	106.2	10.35	 
+218	S003	CMPE	CMPE	W	October	2021	N	218	26	CMPE	Caño Martin Peña East	Land	9:35 AM	ICC/MOL	29.6	762	3.5	50.40%	14520	8.37	7.45	-50.1	141.1	9.256	"Modified sampling location: 18.428407, -66.041791. Water color: brown. It rained the day before in the area."
+pr248a	S003	CMPE	CMPE	W	November	2021	N	pr248a	10	CMPE	Caño Martin Peña East	Land	9:45 AM	JOV	29.6	761.2	4.48	65.10%	17537	10.27	7.26	-51.5	45.88	9.16	"Modified sampling location: 18.428407, -66.041791. Water color: brown. It rained a few minutes before collecting the sample. "
+PR333	S015	CMPE	CMPE	D	January	2022	N	PR333	27	CMPE	Caño Martin Peña East	Land	10:32 AM	ICC/APR/AVC	28.2	762.7	3.43	51.00%	38266	24.31	7.33	-58.6	31.46	7.932	"Modified sampling location: 18.428407, -66.041791."
+cmpw-1	S003	CMPW	CMPW	D	May	2021	N	cmpw-1	27	CMPW	Caño Martín Peña West	Land	10:07 AM	"NSN/Miredglie, Alejandra"	29.5	762.5	0.22	4.20%	34457	21.36	5.04	117.3	26.25	10.27	Bad odor. 
+cmpw-2	S003	CMPW	CMPW	W	June	2021	N	cmpw-2	9	CMPW	Caño Martín Peña West	Land	10:08 AM	ICC/AMO/JOV	27.5	762.8	0.77	8.00%	8558	4.75	5.1	114.4	32.48	24.49	It rained the day before. Water color: brown
+cmpw-3	S003	CMPW	CMPW	W	July	2021	N	cmpw-3	1	CMPW	Caño Martin Peña West	Land	11:16 AM	ICC/MSM	31.1	762.1	17.32	247.50%	19066	11.22	8.09	-100.3	243.6	7.687	Water color: brown. It rained the day before. There is a construction / excavation taking place near the station area.
+42	S003	CMPW	CMPW	W	August	2021	N	42	25	CMPW	Caño Martin Peña West	Land	9:45 AM	ICC	29.9	759.3	2.44	38.10%	50250	32.77	7.28	-49.9	88.33	5.234	Water color: brown. There is a construction / excavation taking place near the station area.
+PR107C	S015	CMPW	CMPW	W	September	2021	N	PR107C	30	CMPW	Caño Martin Peña West	Land	10:03 AM	ICC/IGG/VSB	30.2	759.2	3.33	58.30%	31684	19.61	7.13	-42.2	60.1	13.59	 
+106	S003	CMPW	CMPW	W	September	2021	N	106	30	CMPW	Caño Martin Peña West	Land	10:03 AM	ICC/IGG/VSB	30.2	759.2	3.33	58.30%	31684	19.61	7.13	-42.2	60.1	13.59	 
+181	S003	CMPW	CMPW	W	October	2021	N	181	14	CMPW	Caño Martin Peña West	Land	9:20 AM	ICC/MOL/VSB	28.7	757.6	2.7	39.80%	13490	7.69	7.14	-32.2	63.29	12.22	Water color: brown. It rained the day before.
+pr250a	S003	CMPW	CMPW	W	November	2021	N	pr250a	10	CMPW	Caño Martin Peña West	Land	11:03 AM	JOV	29.7	760.9	1.95	31.20%	42912	26	7.14	-43.6	39.04	4.074	There is a construction / excavation taking place near the station area. High visible water level (*verify)
+pr271a	S003	CMPW	CMPW	D	December	2021	N	pr271a	8	CMPW	Caño Martin Peña  West	Land	9:09 AM	ICC/VSB	25.8	762.7	2.25	30.70%	14415	8.34	7	-35	28.36	7.195	Water color: brown. It rained the day before. It was drizzling  before collecting the water sample. There is a construction / excavation taking place near the station area. The water looked like it had some kind of oil.
+PR331	S015	CMPW	CMPW	D	January	2022	N	PR331	27	CMPW	Caño Martin Peña  West	Land	8:39 AM	ICC/APR/AVC	27.9	762.8	2.77	45.20%	48055	31.26	7.51	-69.2	17.12	5.133	Water color: brown.  There is a construction / excavation taking place near the station area. The water looked like it had some kind of oil.
+PR401	S015	CMPW	CMPW	D	March	2022	N	PR401	31	CMPW	Caño Martin Peña  West	Land	10:41 AM	APR/AVC	28.9	762.6	3.41	52.3	43076	29.46	7.66	-72.2	27.28	7.626	Water color: brownish . It rained the day before and before the sampling event.  Bad smell.
+cs1-1	S003	CS1	CS	D	May	2021	N	cs1-1	26	CS1	Channel Suarez 1	Boat	10:19 AM	ICC	29.4	763.2	7.9	113.40%	26884	16.39	5.95	62.5	78.67	5.061	water color: brown
+cs1-2	S003	CS1	CS	W	June	2021	N	cs1-2	30	CS1	Channel Suarez 1	Boat	10:19 AM	ICC	29.5	762.2	5.99	85.60%	21703	12.96	7.87	-85.1	44.32	4.598	Water color: dark brown 
+cs1-3	S003	CS1	CS	W	July	2021	N	cs1-3	19	CS1	Channel Suarez 1	Boat	10:12 AM	ICC	30.2	763.4	6.98	100.10%	21089	12.54	8.08	-102.4	42	5.744	Water color: brown
+63	S003	CS1	CS	W	August	2021	N	63	23	CS1	Channel Suarez 1	Boat	10:47 AM	ICC	29.3	760.2	5.4	74.80%	23169	13.93	7.56	-68.2	24.11	2.635	Water color: dark brown
+142	S003	CS1	CS	W	September	2021	N	142	27	CS1	Channel Suarez 1	Boat	11:11 AM	ICC	31.6	760.4	4.03	66.80%	20149	11.92	7.52	-68.8	18.49	2.8	Water color: greenish
+198	S003	CS1	CS	W	October	2021	N	198	25	CS1	Channel Suarez 1	Boat	10:34 AM	ICC/AMO/JOV	29.7	762.3	4.63	62.30%	16452	9.58	7.69	-69	57.33	4.976	Water color: brown. 
+pr262a	S003	CS1	CS	D	December	2021	N	pr262a	1	CS1	Channel Suarez 1	Boat	11:15 AM	ICC	28.3	762.7	2.43	33.00%	21857	13.06	7.37	-53	10.9	1.635	Water color: brown. It rained the day before. It was drizzling before collecting the water sample.
+PR315	S015	CS1	CS	D	January	2022	N	PR315	24	CS1	Channel Suarez 1	Boat	N/A	ICC	27.025	N/A	5.41	72.90%	21.181	12.66	8.16	N/A	N/A	0.88	Water color: green. 
+PR419	S015	CS1	CS	D	April	2022	N	PR419	1	CS1	Channel Suarez 1	Boat	11:01 AM	ICC	27.5	763.2	6.6	90.3	21072	12.57	8.38	-116.5	35.33	5.786	Water color: green. It rained the day before  the sampling event. 
+PR556A	S015	CS2	CS	W	July	2021	N	PR556A	19	CS2	Channel Suarez 2	Boat	10:03 AM	ICC	29.8	763.4	3.25	48.40%	28794	17.6	7.24	-43.7	23.86	7.803	Water color: greenish
+PR145C	S015	CS2	CS	W	September	2021	N	PR145C	27	CS2	Channel Suarez 2	Boat	11:02 AM	ICC	31.4	760.6	2.02	33.60%	27604	16.85	7.17	-45.2	17.24	3.956	Water color: brown.
+PR417	S015	CS2	CS	D	April	2022	N	PR417	1	CS2	Channel Suarez 2	Boat	10:51 AM	ICC	27.8	763.3	3.22	47.5	30884	19.13	7.79	-80.9	24.23	5.554	Water color: brown. It rained the day before  the sampling event. 
+PR559A	S015	LLC1	LLC	W	July	2021	N	PR559A	19	LLC1	Los Corozos Lagoon 1	Boat	10:44 AM	ICC	30.5	763.5	6.31	89.50%	18214	10.69	8.2	-110.5	96.84	8.546	Water color: brown
+PR151C	S015	LLC1	LLC	W	September	2021	N	PR151C	27	LLC1	Los Corozos Lagoon 1	Boat	11:49 AM	ICC	32.1	760.3	8.1	118.70%	19052	11.2	8.08	-107	61.95	3.857	Water color: green.
+PR318	S015	LLC1	LLC	D	January	2022	N	PR318	24	LLC1	Los Corozos Lagoon 1	Boat	N/A	ICC	27.598	N/A	3.96	40.00%	32.01	20.01	7.81	N/A	N/A	31.3	Water color: green. 
+PR422	S015	LLC1	LLC	D	April	2022	N	PR422	1	LLC1	Los Corozos Lagoon 1	Boat	11:36 AM	ICC	27	763.1	7.58	100.5	16168	9.43	8.73	-137.4	45.49	6.353	Water color: brownish. It rained the day before  the sampling event. 
+lp1-1	S003	LP1	LP	D	May	2021	N	lp1-1	24	LP1	Piñones Lagoon 1	"""Boat"""	8:46 AM	ICC	26.7	762.6	6.74	102.60%	47587	30.91	4.94	78.3	25.09	5.716	Bad odor. Water color: brown 
+lp1-2	S003	LP1	LP	W	June	2021	N	lp1-2	11	LP1	Piñones Lagoon 1	Land	10:33 AM	ICC	27.3	762.2	0.9	13.20%	34767	21.8	4.66	139.4	74.54	42.03	It rained the day before. Water color: black. Bad odor.
+lp1-3	S003	LP1	LP	W	July	2021	N	lp1-3	1	LP1	Piñones Lagoon 1	"""Boat"""	7:34 AM	ICC/MSM	27.3	761.7	1.23	18.30%	34697	21.7	6.96	-22.5	60.55	83.42	Bad odor. Water color: Black. It rained the day before.
+PR564A	S015	LP1	LP	W	July	2021	N	PR564A	21	LP1	Piñones Lagoon 1	"""Boat"""	8:45 AM	ICC	30.1	763.7	4.51	69.90%	46042	29.71	7.61	-70	64.24	22.83	No bad odor like other times. It was drizzling while I was collecting the water samplep. Water color: brown (on the surface)/greenish
+5	S003	LP1	LP	W	August	2021	N	5	2	LP1	Piñones Lagoon 1	Land	10:00 AM	ICC/EFR	32.2	763.2	10.64	168.50%	43156	27.57	7.96	-101.2	47.89	10.58	Water color: brown
+95	S003	LP1	LP	W	September	2021	N	95	29	LP1	Piñones Lagoon 1	"""Boat"""	8:50 AM	ICC	31.1	759.5	4.7	73.80%	43116	27.58	7.88	-93.3	63.62	9.342	Water color: brown. Bad smell.
+239	S003	LP1	LP	W	October	2021	N	239	28	LP1	Piñones Lagoon 1	"""Boat"""	9:15 AM	ICC/IGG/VSB	29.6	761.6	11	161.50%	31854	19.74	8.19	-100.2	147.1	8.77	 
+pr242a	S003	LP1	LP	W	November	2021	N	pr242a	9	LP1	Piñones Lagoon 1	Land	9:15 AM	MOL	28.8	761	3.83	57.70%	40857	26.04	7.38	-60.1	116.9	6.058	Water color: brown. 
+pr295a	S003	LP1	LP	D	December	2021	N	pr295a	16	LP1	Piñones Lagoon 1	"""Boat"""	10:04 AM	JOV/AMO	25.3	762.4	4.11	59.80%	38014	22.64	7.27	-49	80.2	38.61	Water color: brown. It rained the day before. 
+PR328	S015	LP1	LP	D	January	2022	N	PR328	26	LP1	Piñones Lagoon 1	"""Boat"""	8:50 AM	ICC/VSB/APR	26.1	762.6	4.51	66.20%	44440	28.67	7.22	-52.6	32.5	4.348	Water color: brown.
+PR399	S015	LP1	LP	D	March	2022	N	PR399	31	LP1	Piñones Lagoon 1	Land	9:30 AM	ICC/AVC	26.6	762.5	3.67	53.5	42783	27.47	7.48	-62.1	48.59	64.45	Water color: brown . It rained the day before and before the sampling event.  
+PR558A	S015	LSJ1	LSJ	W	July	2021	N	PR558A	19	LSJ1	San Jose Lagoon 1	Boat	10:32 AM	ICC	30.2	763.4	8.53	120.70%	20329	12.05	8.21	-111.2	63.49	6.33	Water color: greenish
+PR147C	S015	LSJ1	LSJ	W	September	2021	N	PR147C	27	LSJ1	San Jose Lagoon 1	Boat	11:40 AM	ICC	33	760.2	8.07	119.40%	18734	11	8.01	-102.4	58.17	4.378	Water color: green.
+PR317	S015	LSJ1	LSJ	D	January	2022	N	PR317	24	LSJ1	San Jose Lagoon 1	Boat	N/A	ICC	27.84	N/A	8.17	110.60%	18.234	10.74	8.4	N/A	N/A	1	Water color: green. 
+PR421	S015	LSJ1	LSJ	D	April	2022	N	PR421	1	LSJ1	San Jose Lagoon 1	Boat	11:28 AM	ICC	26.7	763.1	8.14	106.5	12201	6.96	8.29	-111.1	69.66	11.48	Water color: green. It rained the day before  the sampling event. 
+PR557A	S015	LSJ2	LSJ	W	July	2021	N	PR557A	19	LSJ2	San Jose Lagoon 2	Boat	10:24 AM	ICC	30.1	763.4	9.19	128.80%	20380	12.09	8.26	-114.7	54.11	6.792	Water color: greenish
+PR149C	S015	LSJ2	LSJ	W	September	2021	N	PR149C	27	LSJ2	San Jose Lagoon 2	Boat	11:31 AM	ICC	31.8	760.3	7.53	108.50%	19436	11.45	7.97	-99.7	34.4	3.275	Water color: green.
+PR316	S015	LSJ2	LSJ	D	January	2022	N	PR316	24	LSJ2	San Jose Lagoon 2	Boat	N/A	ICC	27.161	N/A	8.6	115.30%	19.942	11.85	8.55	N/A	N/A	2.15	Water color: green. 
+PR420	S015	LSJ2	LSJ	D	April	2022	N	PR420	1	LSJ2	San Jose Lagoon 2	Boat	11:21 AM	ICC	27.5	763.1	8.11	109.5	17795	10.46	8.71	-136.6	41.89	7.047	Water color: green. It rained the day before  the sampling event. 
+lsj3-1	S003	LSJ3	LSJ	D	May	2021	N	lsj3-1	27	LSJ3	San Jose Lagoon 3	Land	9:44 AM	ICC/EFR	29.6	762.6	5.4	77.60%	22318	13.43	5.99	59.6	54.1	5.781	water color: brown
+lsj3-2	S003	LSJ3	LSJ	W	June	2021	N	lsj3-2	9	LSJ3	San Jose Lagoon 3	Land	9:46 AM	ICC/AMO/JOV	27.9	762.9	8.24	113.60%	19351	11.46	6.01	58.1	76.11	8.902	It rained the day before. Water color: greenish/dark brown
+lsj3-3	S003	LSJ3	LSJ	W	July	2021	N	lsj3-3	1	LSJ3	San Jose Lagoon 3	Land	10:55 AM	ICC/MSM	30.2	762.3	7.83	110.20%	16930	9.88	8.25	-111.8	71.18	6.567	Water color: greenish. It rained the day before.
+PR566A	S015	LSJ3	LSJ	W	July	2021	N	PR566A	22	LSJ3	San Jose Lagoon 3	Land	10:01 AM	ICC/AMO/JOV	30.9	764.2	4.43	63.40%	18682	10.98	7.97	-94.7	50.04	6.1	Water color: greenish. It rained the day before.
+18	S003	LSJ3	LSJ	W	August	2021	N	18	3	LSJ3	San Jose Lagoon 3	Land	10:03 AM	ICC/AMO/JOV	30.7	762.5	5.1	73.50%	18174	10.66	7.85	-93.1	50.98	6.174	Water color: green
+104	S003	LSJ3	LSJ	W	September	2021	N	104	30	LSJ3	San Jose Lagoon 3	Land	10:24 AM	ICC/IGG/VSB	32	759.3	6.58	95.60%	19515	11.5	8.03	-103.6	50.12	3.91	 
+220	S003	LSJ3	LSJ	W	October	2021	N	220	26	LSJ3	San Jose Lagoon 3	Land	10:00 AM	ICC/MOL	29.3	762	2.97	40.40%	14195	8.17	7.84	-78.6	79.6	7.228	Water color: green.
+pr247a	S003	LSJ3	LSJ	W	November	2021	N	pr247a	10	LSJ3	San Jose Lagoon 3	Land	9:02 AM	JOV	29.2	761	2.25	32.10%	16735	9.77	7.52	-69.1	34.57	4.395	Water color: brown. 
+pr267a	S003	LSJ3	LSJ	D	December	2021	N	pr267a	1	LSJ3	San Jose Lagoon 3	Land	12:17 AM	ICC	28.5	762.2	5.12	70.70%	19294	11.41	7.85	-84.2	32.03	3.785	Water color: green. It rained the day before. It was drizzling  before collecting the water sample.
+PR334	S015	LSJ3	LSJ	D	January	2022	N	PR334	27	LSJ3	San Jose Lagoon 3	Land	10:42 AM	ICC/APR/AVC	27.3	762.7	12.8	162.60%	18608	10.99	8.68	-141.5	52.39	5.831	Water color: green.
+PR402	S015	LSJ3	LSJ	D	March	2022	N	PR402	31	LSJ3	San Jose Lagoon 3	Land	11:06 AM	APR/AVC	27.5	762.4	7.17	96.6	15533	9.12	8.69	-129.3	54.97	7.85	Water color: green. It rained the day before and before the sampling event.  
+PR555A	S015	LT1	LT	W	July	2021	N	PR555A	19	LT1	Torrecillas Lagoon 1	Boat	9:47 AM	ICC	29.7	763.3	9.22	142.50%	44992	28.98	7.43	-57.4	12.65	1.989	 
+PR139C	S015	LT1	LT	W	September	2021	N	PR139C	27	LT1	Torrecillas Lagoon 1	Boat	10:44 AM	ICC	30.4	760.7	6.56	108.40%	53869	35.32	7.61	-74.6	2.313	2.025	 
+PR416	S015	LT1	LT	D	April	2022	N	PR416	1	LT1	Torrecillas Lagoon 1	Boat	10:31 AM	ICC	26.7	763.3	6.69	103.8	53987	35.62	7.95	-90.4	4.685	3.596	 It rained the day before the sampling event. 
+PR554A	S015	LT2	LT	W	July	2021	N	PR554A	19	LT2	Torecillas Lagoon 2	Boat	9:36 AM	ICC	30.5	763.2	8	120.20%	42440	27.09	7.37	-53.5	17	2.224	 
+PR141C	S015	LT2	LT	W	September	2021	N	PR141C	27	LT2	Torrecillas Lagoon 2	Boat	10:23 AM	ICC	31.4	760.8	5.83	94.10%	38533	24.33	7.36	-58	23.56	2.675	Water color: greenish
+PR311	S015	LT2	LT	D	January	2022	N	PR311	24	LT2	Torrecillas Lagoon 2	Boat	N/A	ICC	25.98	N/A	5.46	79.50%	45.138	29.2	7.76	N/A	N/A	0.4	Water color: green. 
+PR415	S015	LT2	LT	D	April	2022	N	PR415	1	LT2	Torrecillas Lagoon 2	Boat	10:15 AM	ICC	26.9	763.3	5.59	82.6	45797	29.63	7.79	-80.8	12.89	3.309	Water color: brown. It rained the day before the sampling event. 

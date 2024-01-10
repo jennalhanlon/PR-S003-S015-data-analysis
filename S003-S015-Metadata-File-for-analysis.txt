@@ -1,4 +1,4 @@
-	Project	Location	Season	Month	Year	Sample_Type
+Sample_Name	Project	Location	Season	Month	Year	Sample_Type
 PR419	S015	CS1	D	April	2022	N
 PR417	S015	CS2	D	April	2022	N
 PR422	S015	LLC1	D	April	2022	N
