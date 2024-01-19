@@ -319,7 +319,7 @@ htmltools::tags$iframe(
 ## Creating Species Barplot
 
 ```{r generating barplots 2}
-PRSeqR_Species <- PR_N %>%  
+PRSeqR_Genus_Species <- PR_N %>%  
   tax_glom(taxrank = "Species") %>%   
   transform_sample_counts(function(x) {x/sum(x)}) %>%   
   psmelt() %>%   
@@ -327,10 +327,10 @@ PRSeqR_Species <- PR_N %>%
            Kingdom, Phylum, Class, Order, Family,Genus,Species) %>%  
   filter(Abundance > 0.05) %>%    
   arrange(Species)
-PRSeqR_Species_bar <- ggplot(PRSeqR_Species, aes(x = Location, y = Abundance, fill = Species)) +   
+PRSeqR_Genus_Species_bar <- ggplot(PRSeqR_Species, aes(x = Location, y = Abundance, fill = Species)) +   
   geom_bar(stat="identity", colour = "black", size=0.3, position = "fill") + scale_fill_manual(values = c("black",                                                                 "#440154FF", "#450659FF","#460B5EFF",                                                                "#472D7AFF",                                                                 "#3B518BFF", "#3A548CFF", "#38598CFF", "#365C8DFF",                                 "#34608DFF", "#33638DFF", "#31678EFF", "#306A8EFF",                                "#2E6E8EFF", "#2D718EFF", "#2B748EFF",                                "#2A778EFF", "#297B8EFF",                                                                "#1F958BFF", "#1F988BFF", "#1E9C89FF", "#1F9F88FF",                                "#1FA287FF", "#21A585FF", "#23A983FF",                                "#25AC82FF", "#29AF7FFF", "#2DB27DFF",                                "#32B67AFF", "#37B878FF", "#3CBC74FF",                                                                "#57C766FF", "#5EC962FF",                                                                "#A2DA37FF",                                                                "#DAE319FF", "#E4E419FF",  "#ECE51BFF", "#F5E61FFF",                                                                "darkorchid1", "darkorchid2", "darkorchid3",                                                                 "#A21C9AFF", "#A62098FF", "#AB2394FF", "#AE2892FF", "#B22B8FFF", "#B6308BFF", "#BA3388FF", "#BE3885FF", "#C13B82FF", "#C53F7EFF",                                "#C8437BFF", "#CC4678FF", "#CE4B75FF", "#D14E72FF", "#D5536FFF", "#D7566CFF", "#DA5B69FF", "#DD5E66FF", "#E06363FF","#00CCCC", "#006600",                                                                "#FF6699",                                                                "#F68D45FF", "#FCA537FF",                                                                "#F6E726FF", "#F4ED27FF",                                                                                                 "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018",                                "#00489C", "#CCCCCC", "#999999", "#A1C299", "#300018","#191970","#353935","#F0FFFF","#89CFF0","#0000FF","#7393B3","#088F8F","#0096FF","#5F9EA0","#0047AB","#6495ED","#00FFFF","#00008B","#6F8FAF","#1434A4","#7DF9FF","#6082B6","#00A36C","#3F00FF","#5D3FD3","#ADD8E6","#191970","#000080","#1F51FF","#A7C7E7","#CCCCFF","#B6D0E2","#96DED1","#4169E1","#0F52BA","#9FE2BF","#87CEEB","#4682B4","#008080","#40E0D0","#0437F2","#40B5AD","#0818A8","#AAFF00","#5F9EA0","#097969","#AFE1AF","#DFFF00","#E4D00A","#00FFFF","#023020","#50C878","#5F8575","#4F7942","#228B22","#7CFC00","#F2D2BD","#FFAC1C","#CD7F32","#DAA06D","#CC5500","#E97451","#E3963E","#F28C28","#D27D2D","#B87333","#FF7F50","#F88379","#DA70D6","#C3B1E1","#CCCCFF","#673147","#A95C68","#800080","#51414F","#953553","#D8BFD8","#630330","#7F00FF","#722F37","#BDB5D5","#FCF55F","#FFFFF0","#F8DE7E","#F0E68C","#FAFA33","#FBEC5D","#F4BB44","#FFDB58")) +  
   guides(fill = guide_legend(reverse = FALSE, keywidth = 1, keyheight = 1)) +  
-  ylab("Relative Abundance (Species > 5%) \n") + xlab("Sample ID") +   
+  ylab("Relative Abundance (Species > 5%) \n") + xlab("Location") +   
   theme_minimal()+theme(panel.border = element_rect(fill=NA, colour = "black"), panel.grid.minor = element_blank(),                         
 panel.grid.major = element_blank(), axis.text.x  =element_text(angle = 90, vjust = 0.5, hjust=1, size=8, colour="black"),                          
 axis.text.y = element_text(size=8, colour="black"), plot.title = element_text(hjust = 0.5),     
@@ -339,18 +339,18 @@ legend.text = element_text(size = 7))
 ```
 
 ```{r barplot2}
-p2 <- ggplotly(PRSeqR_Species_bar)
+p2 <- ggplotly(PRSeqR_Genus_Species_bar)
 ```
 
 ```{r species bar plot1}
-print(PRSeqR_Species_bar)
+print(PRSeqR_Genus_Species_bar)
 ```
 
 ```{r save 1}
-htmlwidgets::saveWidget(p, "PRSeqR_Species_bar.html")
+htmlwidgets::saveWidget(p2, "PRSeqR_Genus_Species_bar.html")
 
 htmltools::tags$iframe(
-  src=file.path(getwd(), "PRSeqR_Species_bar.html"),
+  src=file.path(getwd(), "PRSeqR_Genus_Species_bar.html"),
   width="100%",
   height="600",
   scrolling="no",
@@ -392,7 +392,7 @@ p
 ```
 
 ```{r save2}
-htmlwidgets::saveWidget(p, "Season_family.html")
+htmlwidgets::saveWidget(p3, "Season_family.html")
 
 htmltools::tags$iframe(
   src=file.path(getwd(), "Season_family.html"),
